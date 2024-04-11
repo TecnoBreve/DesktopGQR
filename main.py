@@ -5,6 +5,7 @@ from qdarktheme import setup_theme
 from backEnd import BackEnd
 from qrcode import QRCode
 from webbrowser import open_new_tab as on
+from os import system
 
 class GQR:
     def __init__(self, App: QApplication):
@@ -12,9 +13,18 @@ class GQR:
         setup_theme('dark')
         self.loginWin = loadUi('src/ui/login.ui')
         self.mainWin = loadUi('src/ui/main.ui')
-        
         self.loginWin.show()
+        
+        # Calls - Login
+        self.loginWin.btn_login.clicked.connect(
+            lambda: self.realizar_login(
+                self.loginWin.entry_user.text(),
+                self.loginWin.entry_senha.text(),
+                )
+            )
+        self.loginWin.btn_ajuda.clicked.connect(self.abrir_gitHub)
 
+        # Calls - Main
         self.mainWin.btn_gerar.clicked.connect(
             lambda: self.gerar(
                 self.mainWin.entry_cr.text(),
@@ -26,19 +36,33 @@ class GQR:
             )
         )
 
-        self.loginWin.btn_login.clicked.connect(
-            lambda: self.realizar_login(
-                self.loginWin.entry_user.text(),
-                self.loginWin.entry_senha.text(),
+        self.mainWin.op_empresas.currentIndexChanged.connect(
+            lambda: self.alterar_imagem(
+                self.mainWin.op_empresas.currentText()
                 )
             )
-        
-        self.loginWin.btn_ajuda.clicked.connect(self.abrir_gitHub)
+        self.mainWin.btn_abrir.clicked.connect(
+            self.abrir_pasta
+        )
 
         App.exec()
 
+    def definir_demo(self, value):
+        match value.lower():
+            case 'grupo gps': return 'src/demos/gps.png'
+            case 'poliservice': return 'src/demos/poliservice.png'
+            case 'topservice': return 'src/demos/topservice.png'
+            case 'inhaus': return 'src/demos/inhaus.png'
+
+    def alterar_imagem(self, value):
+        src = self.definir_demo(value)
+        self.mainWin.img_molde.setPixmap(QPixmap(src))
+
     def abrir_gitHub(self):
         on('https://github.com/foxtec198/Desktop_GQR/issues/new')
+
+    def abrir_pasta(self):
+        system('cd QRCodes && explorer .')
 
     def msg(self, win, message, tipo = 0, titulo = 'Gerador QR'):
         match tipo:
@@ -63,9 +87,6 @@ class GQR:
             self.msg(self.mainWin, 'Gerando...')
             self.qr.gerar(cr, op_cr, nivel, nv, op_empresas, tipos)
             self.msg(self.mainWin, f'QRCodes Gerados! - {self.qr.nomeCR}', 1)
-            path = self.qr.definir_cor(self.qr.nomeCR)
-            img = QPixmap(path)
-            self.mainWin.img_molde.setPixmap(img)
         else: self.msg(self.mainWin, 'Dados Invalidos, Confira')
 
 if __name__ == '__main__':
